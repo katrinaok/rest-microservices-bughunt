@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response
+from fastapi import FastAPI, Response, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -27,11 +27,20 @@ async def login(payload: LoginRequest):
     return {"accessToken": token, "userId": user["id"]}
 
 @app.get("/whoami")
-async def whoami(authorization: str | None = None):
+async def whoami(authorization: str | None = Header(default=None)):
     if not authorization or not authorization.startswith("Bearer"):
-        # ВИПРАВЛЕНО: тепер повертаємо 401 замість 200
         return JSONResponse({"error": "missing or invalid token"}, status_code=401)
     
     token = authorization.removeprefix("Bearer").strip()
+    
+    # 1. Перевіряємо, чи токен взагалі наш
+    if not token.startswith("fake-token-for-"):
+        return JSONResponse({"error": "invalid token signature"}, status_code=401)
+        
     email = token.replace("fake-token-for-", "")
+    
+    # 2. Перевіряємо, чи є такий користувач у базі
+    if email not in USERS:
+        return JSONResponse({"error": "user not found"}, status_code=401)
+        
     return {"email": email}
