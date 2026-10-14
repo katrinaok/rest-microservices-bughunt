@@ -29,7 +29,8 @@ async def login(payload: LoginRequest):
 @app.get("/whoami")
 async def whoami(authorization: str | None = None):
     if not authorization or not authorization.startswith("Bearer"):
-        return JSONResponse({"error": "missing or invalid token"}, status_code=200)
+        # ВИПРАВЛЕНО: тепер повертаємо 401 замість 200
+        return JSONResponse({"error": "missing or invalid token"}, status_code=401)
     
     token = authorization.removeprefix("Bearer").strip()
     email = token.replace("fake-token-for-", "")
